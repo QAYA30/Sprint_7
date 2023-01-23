@@ -4,14 +4,12 @@ import io.restassured.RestAssured;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class LoginCourierTest {
-
-    Create create = new Create("Aleks", "12345", "Aleksandr");
+    Courier create = new Courier("Aleks", "12345", "Aleksandr");
     Login login = new Login("Aleks", "12345");
     Login loginWithoutPassword = new Login("Aleks", "");
     Login loginWithoutLogin = new Login("", "12345");
@@ -21,14 +19,12 @@ public class LoginCourierTest {
     @Before
     public void setUp() {
         RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-
         given()
                 .header("Content-type", "application/json")
                 .body(create)
                 .when()
                 .post("/api/v1/courier");
     }
-
     @Test
     @DisplayName("Тест на успешную попытку входа")
     @Description("Проверяется возможность пользователя авторизоваться с корректным логином и паролем")
@@ -42,10 +38,7 @@ public class LoginCourierTest {
                 .assertThat()
                 .statusCode(200)
                 .body("id",notNullValue());
-
-
     }
-
     @Test
     @DisplayName("Тест попытки входа без пароля")
     @Description("Проверяется возможность пользователя авторизоваться без пароля")
@@ -60,7 +53,6 @@ public class LoginCourierTest {
                 .statusCode(400)
                 .body("message",equalTo("Недостаточно данных для входа"));
     }
-
     @Test
     @DisplayName("Тест попытки входа без имени пользователя")
     @Description("Проверяется возможность пользователя авторизоваться без имени пользователя")
@@ -75,7 +67,6 @@ public class LoginCourierTest {
                 .statusCode(400)
                 .body("message",equalTo("Недостаточно данных для входа"));
     }
-
     @Test
     @DisplayName("Тест попытки входа с неправильным паролем")
     @Description("Проверяется попытку авторизации с неверным паролем")
@@ -90,7 +81,6 @@ public class LoginCourierTest {
                 .statusCode(404)
                 .body("message",equalTo("Учетная запись не найдена"));
     }
-
     @Test
     @DisplayName("Тест попытки входа с неправильным именем пользователя")
     @Description("Проверяется попытку авторизации с несуществующим именем пользователя")
@@ -105,7 +95,6 @@ public class LoginCourierTest {
                 .statusCode(404)
                 .body("message",equalTo("Учетная запись не найдена"));
     }
-
     @After
     public void loginAndDeleteCourier() {
         IdCourier idCourier = given()
@@ -115,8 +104,7 @@ public class LoginCourierTest {
                 .post("/api/v1/courier/login")
                 .then()
                 .extract().body().as(IdCourier.class);
-
-        given()
+                 given()
                 .header("Content-type", "application/json")
                 .body("{\"name\": \"" + idCourier.getId() + "\"}")
                 .when()

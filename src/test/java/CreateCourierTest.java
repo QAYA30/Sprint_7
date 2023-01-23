@@ -4,16 +4,14 @@ import io.restassured.RestAssured;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.*;
 
-
 public class CreateCourierTest {
-    Create create = new Create("Aleks", "12345", "Aleksandr");
-    Create createWithoutLogin = new Create("", "12345", "Aleksandr");
-    Create createWithoutPassword = new Create("Aleks", "", "Aleksandr");
-    Login login = new Login("Aleks", "12345");
+    private final Courier create = new Courier("Aleks", "12345", "Aleksandr");
+    private final Courier createWithoutLogin = new Courier("", "12345", "Aleksandr");
+    private final Courier createWithoutPassword = new Courier("Aleks", "", "Aleksandr");
+    private final Login login = new Login("Aleks", "12345");
 
     @Before
     public void setUp() {
@@ -32,10 +30,7 @@ public class CreateCourierTest {
                 .then().assertThat()
                 .statusCode(201)
                 .body("ok", is(true));
-
-
     }
-
     @Test
     @DisplayName("Невозможно создать дубликат курьера")
     @Description("Проверяет невозможность создания курьера с существующим именем пользователя")
@@ -54,7 +49,6 @@ public class CreateCourierTest {
                 .statusCode(409)
                 .body("message", equalTo("Этот логин уже используется. Попробуй другой."));
     }
-
     @Test
     @DisplayName("Создание курьера без пароля")
     @Description("Проверяет невозможность создания курьера без поля пароль")
@@ -68,7 +62,6 @@ public class CreateCourierTest {
                 .statusCode(400)
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
-
     @Test
     @DisplayName("Создание курьера без имени пользователя")
     @Description("Проверяет невозможность создания курьера без поля имя пользователя")
@@ -82,7 +75,6 @@ public class CreateCourierTest {
                 .statusCode(400)
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
-
     @After
     public void loginAndDeleteCourier() {
         IdCourier idCourier = given()
@@ -92,7 +84,6 @@ public class CreateCourierTest {
                 .post("/api/v1/courier/login")
                 .then()
                 .extract().body().as(IdCourier.class);
-
         given()
                 .header("Content-type", "application/json")
                 .body("{\"name\": \"" + idCourier.getId() + "\"}")

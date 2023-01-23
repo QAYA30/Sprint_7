@@ -4,36 +4,28 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 @RunWith(Parameterized.class)
 public class CreateOrderTest {
     private final String[] changeColor;
-
     public CreateOrderTest(String[] changeColor) {
         this.changeColor = changeColor;
     }
-
     @Before
     public void setUp() {
         RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
     }
-
     @Parameterized.Parameters
     public static Object[][] getQuest() {
-
-
         return new Object[][]{
                 {new String[]{"GREY"}},
                 {new String[]{"BLACK"}},
                 {new String[]{"GREY", "BLACK"}},
                 {new String[]{""}},
         };
-
     }
-
     @Test
     @DisplayName("Создание заказа")
     public void createOrder() {
