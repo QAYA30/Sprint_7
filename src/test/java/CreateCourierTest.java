@@ -1,93 +1,45 @@
-import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
 public class CreateCourierTest {
-    private final Courier create = new Courier("Aleks", "12345", "Aleksandr");
-    private final Courier createWithoutLogin = new Courier("", "12345", "Aleksandr");
-    private final Courier createWithoutPassword = new Courier("Aleks", "", "Aleksandr");
-    private final Login login = new Login("Aleks", "12345");
-
     @Before
     public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
+        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
+        CourierHandles courierHandles = new CourierHandles();
+        courierHandles.addCourier("Aleks", "12345", "Aleksandr");
+        courierHandles.deleteCourier("Aleks", "12345");
     }
 
     @Test
-    @DisplayName("Проверка создания нового пользователя")
-    @Description("Проверяет позитивную попытку создать пользователя")
-    public void successfulCreateNewCourier() {
-        given()
-                .header("Content-type", "application/json")
-                .body(create)
-                .when()
-                .post("/api/v1/courier")
-                .then().assertThat()
-                .statusCode(201)
-                .body("ok", is(true));
+    @DisplayName ("Проверяет позитивную попытку создать пользователя")
+    public void createCourierTestPositive() {
+        CourierHandles courierHandles = new CourierHandles();
+        Response response = courierHandles.addCourier("Aleks", "12345", "Aleksandr");
+        response.then().assertThat().statusCode(201);
+        response.then().assertThat().body("ok", equalTo(true));
     }
+
     @Test
-    @DisplayName("Невозможно создать дубликат курьера")
-    @Description("Проверяет невозможность создания курьера с существующим именем пользователя")
-    public void errorDuplicateCourier() {
-        given()
-                .header("Content-type", "application/json")
-                .body(create)
-                .when()
-                .post("/api/v1/courier");
-        given()
-                .header("Content-type", "application/json")
-                .body(create)
-                .when()
-                .post("/api/v1/courier")
-                .then().assertThat()
-                .statusCode(409)
-                .body("message", equalTo("Этот логин уже используется. Попробуй другой."));
+    @DisplayName ("Негативные проверки метода создания курьера")
+    public void createCourierTestNegative() {
+        CourierHandles courierHandles = new CourierHandles();
+        Response response = courierHandles.addCourier("Aleks1", "12345", "Aleksandr1");
+        response.then().assertThat().statusCode(409);
+        response.then().assertThat().body("message", equalTo("Этот логин уже используется. Попробуйте другой."));
+        Response response1 = courierHandles.addCourier("Aleks2", "", "Aleksandr2");
+        response1.then().assertThat().statusCode(400);
+        response1.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
-    @Test
-    @DisplayName("Создание курьера без пароля")
-    @Description("Проверяет невозможность создания курьера без поля пароль")
-    public void createWithoutLogin() {
-        given()
-                .header("Content-type", "application/json")
-                .body(createWithoutLogin)
-                .when()
-                .post("/api/v1/courier")
-                .then().assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Недостаточно данных для создания учетной записи"));
-    }
-    @Test
-    @DisplayName("Создание курьера без имени пользователя")
-    @Description("Проверяет невозможность создания курьера без поля имя пользователя")
-    public void createWithoutPassword() {
-        given()
-                .header("Content-type", "application/json")
-                .body(createWithoutPassword)
-                .when()
-                .post("/api/v1/courier")
-                .then().assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Недостаточно данных для создания учетной записи"));
-    }
+
     @After
-    public void loginAndDeleteCourier() {
-        IdCourier idCourier = given()
-                .header("Content-type", "application/json")
-                .body(login)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .extract().body().as(IdCourier.class);
-        given()
-                .header("Content-type", "application/json")
-                .body("{\"name\": \"" + idCourier.getId() + "\"}")
-                .when()
-                .delete("/api/v1/courier/" + idCourier.getId());
+    public void deleteCourier() {
+        CourierHandles courierHandles = new CourierHandles();
+        courierHandles.deleteCourier("Aleks", "12345");
     }
+
 }

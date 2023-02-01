@@ -1,44 +1,62 @@
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import static io.restassured.RestAssured.given;
+
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 @RunWith(Parameterized.class)
 public class CreateOrderTest {
-    private final String[] changeColor;
-    public CreateOrderTest(String[] changeColor) {
-        this.changeColor = changeColor;
+        private final String firstName;
+        private final String lastName;
+        private final String address;
+        private final String metroStation;
+        private final String phone;
+        private final int rentTime;
+        private final String deliveryDate;
+        private final String comment;
+        private final String[] color;
+
+        public CreateOrderTest(String firstName, String lastName, String address, String metroStation, String phone, int rentTime, String deliveryDate, String comment, String[] color) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.address = address;
+            this.metroStation = metroStation;
+            this.phone = phone;
+            this.rentTime = rentTime;
+            this.deliveryDate = deliveryDate;
+            this.comment = comment;
+            this.color = color;
+        }
+
+        @Parameterized.Parameters(name = "Тестовые данные: {0} {1} {2} {3}")
+        public static Object[][] getCredentials() {
+            return new Object[][]{
+                    {"Aleksandr", "Ivanov", "Gogolya", "4", "+7 995 503 33 33", 2, "2022", "Faster", new String[]{"BLACK", "GREY"}},
+                    {"Aleksandr", "Ivanov", "Gogolya", "4", "+7 995 503 33 33", 2, "2022", "Faster", new String[]{"BLACK"}},
+                    {"Aleksandr", "Ivanov", "Gogolya", "4", "+7 995 503 33 33", 2, "2022", "Faster", new String[]{"GREY"}},
+                    {"Aleksandr", "Ivanov", "Gogolya", "4", "+7 995 503 33 33", 2, "2022", "Faster", new String[]{""}},
+            };
+        }
+
+        @Before
+        public void setUp() {
+            RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
+        }
+
+        @Test
+        @DisplayName("Создание заказа")
+        public void createOrderTest() {
+            OrderHandles ordersHandles = new OrderHandles();
+            Response response = ordersHandles.createOrder(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate, comment, color);
+            response.then().assertThat().statusCode(201);
+            response.then().assertThat().body("track", notNullValue());
+        }
     }
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-    }
-    @Parameterized.Parameters
-    public static Object[][] getQuest() {
-        return new Object[][]{
-                {new String[]{"GREY"}},
-                {new String[]{"BLACK"}},
-                {new String[]{"GREY", "BLACK"}},
-                {new String[]{""}},
-        };
-    }
-    @Test
-    @DisplayName("Создание заказа")
-    public void createOrder() {
-        SetupOrderList setupOrderList = new SetupOrderList("Aleksandr", "Ivanov", "Gogolya, 14", "4",
-                "+7 995 503 33 33", 2, "2022-12-12", "Faster", changeColor);
-        given()
-                .header("Content-type", "application/json")
-                .body(setupOrderList)
-                .when()
-                .post("/api/v1/orders")
-                .then()
-                .assertThat()
-                .statusCode(201)
-                .body("track", notNullValue());
-    }
-}
+
+
+
+

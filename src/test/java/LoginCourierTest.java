@@ -1,113 +1,66 @@
-import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
-import org.junit.After;
+import io.restassured.response.Response;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.equalTo;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import static org.hamcrest.CoreMatchers.notNullValue;
 
-public class LoginCourierTest {
-    Courier create = new Courier("Aleks", "12345", "Aleksandr");
-    Login login = new Login("Aleks", "12345");
-    Login loginWithoutPassword = new Login("Aleks", "");
-    Login loginWithoutLogin = new Login("", "12345");
-    Login loginWithBadPassword = new Login("Aleks", "12346");
-    Login loginWithBadLogin = new Login("Alekc", "12345");
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-        given()
-                .header("Content-type", "application/json")
-                .body(create)
-                .when()
-                .post("/api/v1/courier");
+
+@RunWith(Parameterized.class)
+public class LoginCourierTest {
+        private final String login;
+        private final String password;
+        private final int expectedCode;
+        private final String expectedMessage;
+
+        public LoginCourierTest(String login, String password, int expectedCode, String expectedMessage) {
+            this.login = login;
+            this.password = password;
+            this.expectedCode = expectedCode;
+            this.expectedMessage = expectedMessage;
+        }
+
+        @Parameterized.Parameters(name = "Тестовые данные: {0} {1} {2} {3}")
+        public static Object[][] getCredentials() {
+            return new Object[][]{
+                    {"Aleks", "12345", 200, ""},
+                    {"Aleks", "", 400, "Недостаточно данных для входа"},
+                    {"", "12345", 400, "Недостаточно данных для входа"},
+                    {"Aleks2", "12345", 404, "Учетная запись не найдена"}
+
+
+            };
+        }
+
+        @Before
+        public void setUp() {
+            RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
+            CourierHandles courierHandles = new CourierHandles();
+            //Добавляем тестовую учетку для проверки успешного первого login
+            courierHandles.addCourier("Aleks", "12345", "Aleksandr");
+            //На всякий случай удаляем учетку для проверки несуществующего пользователя
+            courierHandles.deleteCourier("Aleks2", "12345");
+        }
+
+        @Test
+        @DisplayName("Тестирование метода логина курьера")
+        public void testLoginCourier() {
+            CourierHandles courierHandles = new CourierHandles();
+            Response response = courierHandles.loginCourier(login, password);
+            response.then().assertThat().statusCode(expectedCode);
+            if (expectedCode == 200) {
+                response.then().assertThat().body("id", notNullValue());
+            } else
+                response.then().assertThat().body("message", Matchers.equalTo(expectedMessage));
+        }
     }
-    @Test
-    @DisplayName("Тест на успешную попытку входа")
-    @Description("Проверяется возможность пользователя авторизоваться с корректным логином и паролем")
-    public void successfulLoginCourier() {
-        given()
-                .header("Content-type", "application/json")
-                .body(login)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("id",notNullValue());
-    }
-    @Test
-    @DisplayName("Тест попытки входа без пароля")
-    @Description("Проверяется возможность пользователя авторизоваться без пароля")
-    public void loginWithoutPassword() {
-        given()
-                .header("Content-type", "application/json")
-                .body(loginWithoutPassword)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message",equalTo("Недостаточно данных для входа"));
-    }
-    @Test
-    @DisplayName("Тест попытки входа без имени пользователя")
-    @Description("Проверяется возможность пользователя авторизоваться без имени пользователя")
-    public void loginWithoutLogin() {
-        given()
-                .header("Content-type", "application/json")
-                .body(loginWithoutLogin)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message",equalTo("Недостаточно данных для входа"));
-    }
-    @Test
-    @DisplayName("Тест попытки входа с неправильным паролем")
-    @Description("Проверяется попытку авторизации с неверным паролем")
-    public void loginWithBadPassword() {
-        given()
-                .header("Content-type", "application/json")
-                .body(loginWithBadPassword)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .assertThat()
-                .statusCode(404)
-                .body("message",equalTo("Учетная запись не найдена"));
-    }
-    @Test
-    @DisplayName("Тест попытки входа с неправильным именем пользователя")
-    @Description("Проверяется попытку авторизации с несуществующим именем пользователя")
-    public void loginWithBadLogin() {
-        given()
-                .header("Content-type", "application/json")
-                .body(loginWithBadLogin)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .assertThat()
-                .statusCode(404)
-                .body("message",equalTo("Учетная запись не найдена"));
-    }
-    @After
-    public void loginAndDeleteCourier() {
-        IdCourier idCourier = given()
-                .header("Content-type", "application/json")
-                .body(login)
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .extract().body().as(IdCourier.class);
-                 given()
-                .header("Content-type", "application/json")
-                .body("{\"name\": \"" + idCourier.getId() + "\"}")
-                .when()
-                .delete("/api/v1/courier/" + idCourier.getId());
-    }
-}
+
+
+
+
+
