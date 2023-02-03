@@ -31,7 +31,6 @@ public class CreateOrderTest {
             this.comment = comment;
             this.color = color;
         }
-
         @Parameterized.Parameters(name = "Тестовые данные: {0} {1} {2} {3}")
         public static Object[][] getCredentials() {
             return new Object[][]{
@@ -41,12 +40,10 @@ public class CreateOrderTest {
                     {"Aleksandr", "Ivanov", "Gogolya", "4", "+7 995 503 33 33", 2, "2022", "Faster", new String[]{""}},
             };
         }
-
         @Before
         public void setUp() {
             RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
         }
-
         @Test
         @DisplayName("Создание заказа")
         public void createOrderTest() {
@@ -56,7 +53,3 @@ public class CreateOrderTest {
             response.then().assertThat().body("track", notNullValue());
         }
     }
-
-
-
-

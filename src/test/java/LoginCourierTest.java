@@ -6,10 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import static org.hamcrest.CoreMatchers.notNullValue;
-
-
 
 @RunWith(Parameterized.class)
 public class LoginCourierTest {
@@ -24,7 +21,6 @@ public class LoginCourierTest {
             this.expectedCode = expectedCode;
             this.expectedMessage = expectedMessage;
         }
-
         @Parameterized.Parameters(name = "Тестовые данные: {0} {1} {2} {3}")
         public static Object[][] getCredentials() {
             return new Object[][]{
@@ -32,21 +28,15 @@ public class LoginCourierTest {
                     {"Aleks", "", 400, "Недостаточно данных для входа"},
                     {"", "12345", 400, "Недостаточно данных для входа"},
                     {"Aleks2", "12345", 404, "Учетная запись не найдена"}
-
-
             };
         }
-
         @Before
         public void setUp() {
             RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
             CourierHandles courierHandles = new CourierHandles();
-            //Добавляем тестовую учетку для проверки успешного первого login
             courierHandles.addCourier("Aleks", "12345", "Aleksandr");
-            //На всякий случай удаляем учетку для проверки несуществующего пользователя
             courierHandles.deleteCourier("Aleks2", "12345");
         }
-
         @Test
         @DisplayName("Тестирование метода логина курьера")
         public void testLoginCourier() {
@@ -59,8 +49,3 @@ public class LoginCourierTest {
                 response.then().assertThat().body("message", Matchers.equalTo(expectedMessage));
         }
     }
-
-
-
-
-
